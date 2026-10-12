@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f6fb;
+  --foreground: #1a2233;
+  --card: #ffffff;
+  --card-foreground: #1a2233;
+  --muted: #eef1f7;
+  --muted-foreground: #64748b;
+  --border: #e3e8f0;
+  --primary: #5b5bd6;
+  --primary-foreground: #ffffff;
+  --accent: #0891b2;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --ring: #5b5bd6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animated aurora backdrop used behind the auth + app shells. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: radial-gradient(
+      ellipse 80% 60% at 50% -10%,
+      rgba(99, 102, 241, 0.12),
+      transparent
+    ),
+    var(--background);
+}
+
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  width: 42rem;
+  height: 42rem;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.35;
+  animation: drift 22s ease-in-out infinite alternate;
+}
+
+.aurora::before {
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.5), transparent 70%);
+  top: -12rem;
+  left: -10rem;
+}
+
+.aurora::after {
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.35), transparent 70%);
+  bottom: -14rem;
+  right: -8rem;
+  animation-delay: -11s;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(4rem, 2rem, 0) scale(1.15);
+  }
+}
+
+/* Frosted glass card surface. */
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.75));
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+}
+
+/* Gradient border for highlighted cards. */
+.gradient-border {
+  position: relative;
+  background: var(--card);
+  border-radius: 1rem;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.6),
+    rgba(34, 211, 238, 0.35),
+    transparent 60%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Thin custom scrollbar. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c7d0e0;
+  border-radius: 9999px;
+  border: 2px solid var(--background);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aab6cd;
+}
+
+/* Recharts tooltip light styling. */
+.recharts-default-tooltip {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12) !important;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.4s ease both;
+}
+
