@@ -1,0 +1,42 @@
+# Dependencies (reinstalled inside the image)
+node_modules
+.pnp
+.pnp.js
+
+# Next.js build output
+.next
+out
+build
+
+# Local env files — never bake secrets/config into the image.
+# Komodo injects BACKEND_URL at runtime via CI/CD.
+.env
+.env*.local
+
+# Testing & linting
+coverage
+.nyc_output
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+*.swp
+
+# Git
+.git
+.gitignore
+
+# Docker (not needed inside the build context)
+Dockerfile
+.dockerignore
+
+# Docs / misc
+README.md
+*.md
