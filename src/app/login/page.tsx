@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff, Loader2, Lock, LogIn, User } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, getDefaultRouteForUser } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
 import { Button, Input, Label } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading, login } = useAuth();
+  const { user, loading, login, getDefaultRoute } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,16 +19,16 @@ export default function LoginPage() {
 
   // Redirect once already authenticated.
   useEffect(() => {
-    if (!loading && user) router.replace("/dashboard");
-  }, [loading, user, router]);
+    if (!loading && user) router.replace(getDefaultRoute());
+  }, [loading, user, router, getDefaultRoute]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      await login(username.trim(), password);
-      router.replace("/dashboard");
+      const loggedInUser = await login(username.trim(), password);
+      router.replace(getDefaultRouteForUser(loggedInUser));
     } catch (err) {
       const message =
         err instanceof ApiError
