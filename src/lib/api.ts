@@ -184,6 +184,9 @@ export const api = {
   },
 
   merchants: {
+    async options(): Promise<{ id: string; name: string }[]> {
+      return request<{ id: string; name: string }[]>("/merchants/options");
+    },
     async list(params: {
       page?: number;
       limit?: number;

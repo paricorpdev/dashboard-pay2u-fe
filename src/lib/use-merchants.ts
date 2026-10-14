@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { Merchant } from "@/lib/types";
 
-/** Load the merchant list (used by filters + the merchants page). */
+export interface MerchantOption {
+  id: string;
+  name: string;
+}
+
+/** Load the merchant option list for dropdown filters (no RBAC required). */
 export function useMerchants() {
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [merchants, setMerchants] = useState<MerchantOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,8 +18,8 @@ export function useMerchants() {
     const controller = new AbortController();
     (async () => {
       try {
-        const res = await api.merchants.list({ limit: 100 });
-        if (!controller.signal.aborted) setMerchants(res.data);
+        const res = await api.merchants.options();
+        if (!controller.signal.aborted) setMerchants(res);
       } catch (err) {
         if (!controller.signal.aborted) {
           setError(err instanceof Error ? err.message : "Gagal memuat merchant");

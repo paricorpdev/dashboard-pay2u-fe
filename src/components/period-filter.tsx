@@ -2,7 +2,8 @@
 
 import { CalendarDays, Filter, Store } from "lucide-react";
 import { MONTH_NAMES } from "@/lib/utils";
-import type { Merchant, PeriodMode } from "@/lib/types";
+import type { MerchantOption } from "@/lib/use-merchants";
+import type { PeriodMode } from "@/lib/types";
 import { Label, Select } from "@/components/ui";
 
 export interface PeriodValue {
@@ -21,7 +22,7 @@ export function PeriodFilter({
 }: {
   value: PeriodValue;
   onChange: (next: PeriodValue) => void;
-  merchants: Merchant[];
+  merchants: MerchantOption[];
   years: number[];
   loadingMerchants?: boolean;
 }) {
