@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import {
   BarChart3,
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
   Store,
   type LucideIcon,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -29,6 +31,11 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { canAccessRoute } = useAuth();
+
+  const visibleNavItems = useMemo(() => {
+    return NAV_ITEMS.filter((item) => canAccessRoute(item.href));
+  }, [canAccessRoute]);
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-border bg-card/70 backdrop-blur-xl">
@@ -48,7 +55,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-2">
-        {NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
