@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  ChevronLeft,
+  ChevronRight,
   KeyRound,
   Pencil,
   Plus,
@@ -27,10 +29,12 @@ import { formatDate } from "@/lib/utils";
 
 export default function MerchantsPage() {
   const [rows, setRows] = useState<Merchant[]>([]);
+  const [paging, setPaging] = useState({ page: 1, totalPage: 1, totalData: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Merchant | null>(null);
@@ -42,23 +46,34 @@ export default function MerchantsPage() {
     setError(null);
     try {
       const res: PagedResponse<Merchant> = await api.merchants.list({
-        limit: 100,
+        page,
+        limit: 10,
         search: search || undefined,
         is_active:
           statusFilter === "" ? undefined : statusFilter === "active",
       });
       setRows(res.data);
+      setPaging({
+        page: res.paging.page,
+        totalPage: res.paging.total_page || 1,
+        totalData: res.paging.total_data,
+      });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Gagal memuat merchant.");
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter]);
+  }, [page, search, statusFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Reset ke halaman 1 saat filter berubah
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
 
   async function handleDelete(m: Merchant) {
     if (!confirm(`Hapus merchant "${m.name}"? Tindakan ini tidak dapat dibatalkan.`)) {
@@ -146,76 +161,101 @@ export default function MerchantsPage() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="pb-3 pr-4 font-medium">Kode</th>
-                  <th className="pb-3 pr-4 font-medium">Nama</th>
-                  <th className="pb-3 pr-4 font-medium">Webhook</th>
-                  <th className="pb-3 pr-4 font-medium">Status</th>
-                  <th className="pb-3 pr-4 font-medium">Dibuat</th>
-                  <th className="pb-3 text-right font-medium">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((m) => (
-                  <tr
-                    key={m.id}
-                    className="border-b border-border/50 last:border-0"
-                  >
-                    <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">
-                      {m.code}
-                    </td>
-                    <td className="py-3 pr-4 font-medium text-foreground">{m.name}</td>
-                    <td className="max-w-[180px] truncate py-3 pr-4 text-xs text-muted-foreground">
-                      {m.webhook_url ?? "-"}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <Badge tone={m.is_active ? "success" : "danger"}>
-                        {m.is_active ? "Aktif" : "Nonaktif"}
-                      </Badge>
-                    </td>
-                    <td className="py-3 pr-4 text-xs text-muted-foreground">
-                      {formatDate(m.created_at)}
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          title="Regenerate Secret"
-                          onClick={() => openSecret(m)}
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          title="Lihat Kredensial"
-                          onClick={() => openSecret(m)}
-                        >
-                          <KeyRound className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          title="Edit"
-                          onClick={() => openEdit(m)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          title="Hapus"
-                          onClick={() => void handleDelete(m)}
-                        >
-                          <Trash2 className="h-4 w-4 text-danger" />
-                        </Button>
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                    <th className="pb-3 pr-4 font-medium">Kode</th>
+                    <th className="pb-3 pr-4 font-medium">Nama</th>
+                    <th className="pb-3 pr-4 font-medium">Webhook</th>
+                    <th className="pb-3 pr-4 font-medium">Status</th>
+                    <th className="pb-3 pr-4 font-medium">Dibuat</th>
+                    <th className="pb-3 text-right font-medium">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((m) => (
+                    <tr
+                      key={m.id}
+                      className="border-b border-border/50 last:border-0"
+                    >
+                      <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">
+                        {m.code}
+                      </td>
+                      <td className="py-3 pr-4 font-medium text-foreground">{m.name}</td>
+                      <td className="max-w-[180px] truncate py-3 pr-4 text-xs text-muted-foreground">
+                        {m.webhook_url ?? "-"}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <Badge tone={m.is_active ? "success" : "danger"}>
+                          {m.is_active ? "Aktif" : "Nonaktif"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 pr-4 text-xs text-muted-foreground">
+                        {formatDate(m.created_at)}
+                      </td>
+                      <td className="py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            title="Regenerate Secret"
+                            onClick={() => openSecret(m)}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            title="Lihat Kredensial"
+                            onClick={() => openSecret(m)}
+                          >
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            title="Edit"
+                            onClick={() => openEdit(m)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            title="Hapus"
+                            onClick={() => void handleDelete(m)}
+                          >
+                            <Trash2 className="h-4 w-4 text-danger" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Total {paging.totalData} merchant · Halaman {paging.page} dari{" "}
+                {paging.totalPage}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={page >= paging.totalPage || loading}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </Card>
 

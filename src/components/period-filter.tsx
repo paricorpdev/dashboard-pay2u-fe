@@ -112,7 +112,7 @@ export function PeriodFilter({
             <option value="">Semua Merchant</option>
             {merchants.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} ({m.code})
+                {m.name}
               </option>
             ))}
           </Select>
