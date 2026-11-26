@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, RefreshCw, X } from "lucide-react";
+import { Copy, RotateCw, X } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import type { Merchant } from "@/lib/types";
 import { Badge, Button } from "@/components/ui";
@@ -42,18 +42,22 @@ function CopyField({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-/** View merchant credentials + rotate API key / webhook secret. */
+/** View merchant credentials issued and managed by ms-gateway-pay2u. */
 export function SecretDialog({
   open,
   merchant,
+  canManage,
   onClose,
+  onUpdated,
 }: {
   open: boolean;
   merchant: Merchant | null;
+  canManage: boolean;
   onClose: () => void;
+  onUpdated: (merchant: Merchant) => void;
 }) {
   const [current, setCurrent] = useState<Merchant | null>(merchant);
-  const [rotating, setRotating] = useState(false);
+  const [rotating, setRotating] = useState<"api" | "webhook" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,27 +67,23 @@ export function SecretDialog({
 
   if (!open || !merchant) return null;
 
-  async function rotate(apiKey: boolean, webhookSecret: boolean) {
-    if (!merchant) return;
-    if (
-      !confirm(
-        `Regenerate kredensial? Kredensial lama akan langsung tidak valid.`,
-      )
-    ) {
-      return;
-    }
-    setRotating(true);
+  async function rotate(kind: "api" | "webhook") {
+    if (!current || rotating) return;
+    const label = kind === "api" ? "API key" : "webhook secret";
+    if (!window.confirm(`Regenerate ${label}? Credential lama akan langsung tidak berlaku.`)) return;
+
+    setRotating(kind);
     setError(null);
     try {
-      const updated = await api.merchants.regenerateSecret(merchant.id, {
-        rotate_api_key: apiKey,
-        rotate_webhook_secret: webhookSecret,
-      });
+      const updated = kind === "api"
+        ? await api.merchants.rotateKey(current.id)
+        : await api.merchants.rotateWebhookSecret(current.id);
       setCurrent(updated);
+      onUpdated(updated);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Gagal regenerate secret.");
+      setError(err instanceof ApiError ? err.message : `Gagal regenerate ${label}.`);
     } finally {
-      setRotating(false);
+      setRotating(null);
     }
   }
 
@@ -117,7 +117,29 @@ export function SecretDialog({
           </div>
 
           <CopyField label="API Key" value={current?.api_key ?? null} />
+          {canManage ? (
+            <Button
+              type="button"
+              variant="outline"
+              loading={rotating === "api"}
+              disabled={rotating !== null}
+              onClick={() => void rotate("api")}
+            >
+              <RotateCw className="h-4 w-4" /> Regenerate API Key
+            </Button>
+          ) : null}
           <CopyField label="Webhook Secret" value={current?.webhook_secret ?? null} />
+          {canManage ? (
+            <Button
+              type="button"
+              variant="outline"
+              loading={rotating === "webhook"}
+              disabled={rotating !== null}
+              onClick={() => void rotate("webhook")}
+            >
+              <RotateCw className="h-4 w-4" /> Regenerate Webhook Secret
+            </Button>
+          ) : null}
 
           {error ? (
             <div className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
@@ -125,22 +147,9 @@ export function SecretDialog({
             </div>
           ) : null}
 
-          <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
-            <Button
-              variant="outline"
-              loading={rotating}
-              onClick={() => rotate(true, false)}
-            >
-              <RefreshCw className="h-4 w-4" /> Regenerate API Key
-            </Button>
-            <Button
-              variant="outline"
-              loading={rotating}
-              onClick={() => rotate(false, true)}
-            >
-              <RefreshCw className="h-4 w-4" /> Regenerate Webhook Secret
-            </Button>
-          </div>
+          <p className="border-t border-border pt-4 text-xs text-muted-foreground">
+            Kredensial dikelola oleh service MS Gateway. Regenerate hanya tersedia untuk Admin.
+          </p>
         </div>
       </div>
     </div>

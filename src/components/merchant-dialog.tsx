@@ -105,7 +105,7 @@ export function MerchantDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="Nama Merchant"
               required
-              minLength={3}
+              minLength={2}
               maxLength={100}
             />
           </div>

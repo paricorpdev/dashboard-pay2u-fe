@@ -56,11 +56,27 @@ export interface LoginResponse {
   user?: User;
 }
 
+export interface CreateAdminRequest {
+  username: string;
+  password: string;
+  full_name: string;
+  email?: string | null;
+}
+
+export interface UpdateAdminRequest {
+  username?: string;
+  password?: string;
+  full_name?: string;
+  email?: string | null;
+  status?: "ACTIVE" | "INACTIVE";
+}
+
 // ── Merchants ─────────────────────────────────────────────────────────────
 export interface Merchant {
   id: string;
   code: string;
   name: string;
+  admin_id?: string | null;
   api_key: string;
   webhook_url: string | null;
   webhook_secret: string | null;
@@ -79,11 +95,6 @@ export interface UpdateMerchantRequest {
   name: string;
   webhook_url?: string | null;
   is_active: boolean;
-}
-
-export interface RegenerateSecretRequest {
-  rotate_api_key: boolean;
-  rotate_webhook_secret: boolean;
 }
 
 export interface PageMetadata {

@@ -26,22 +26,30 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
     }
   }, [loading, user, pathname, canAccessRoute, getDefaultRoute, router]);
 
-  if (loading || !user) {
-    return (
-      <div className="grid min-h-screen place-items-center">
-        <LoadingBlock label="Memverifikasi sesi…" />
-      </div>
-    );
-  }
+  const blocked = loading || !user || !canAccessRoute(pathname);
+  const loadingLabel = loading
+    ? "Memverifikasi sesi…"
+    : !user
+      ? "Mengarahkan ke login…"
+      : "Mengarahkan ke halaman yang sesuai…";
 
-  // If user doesn't have permission for this route, show loading while redirecting
-  if (!canAccessRoute(pathname)) {
-    return (
-      <div className="grid min-h-screen place-items-center">
-        <LoadingBlock label="Mengarahkan ke halaman yang sesuai…" />
+  // Keep the route segment in the render tree so Next.js can validate and
+  // pre-render it for instant navigation. The full-screen cover prevents the
+  // protected UI from being visible until the session and route permission are
+  // verified.
+  return (
+    <>
+      <div
+        aria-hidden={blocked}
+        className={blocked ? "invisible pointer-events-none" : undefined}
+      >
+        <AppShell>{children}</AppShell>
       </div>
-    );
-  }
-
-  return <AppShell>{children}</AppShell>;
+      {blocked ? (
+        <div className="fixed inset-0 z-[100] grid min-h-screen place-items-center bg-background">
+          <LoadingBlock label={loadingLabel} />
+        </div>
+      ) : null}
+    </>
+  );
 }

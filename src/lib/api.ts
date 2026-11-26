@@ -2,6 +2,8 @@ import type {
   ApiEnvelope,
   AnalyticSummary,
   CreateMerchantRequest,
+  CreateAdminRequest,
+  UpdateAdminRequest,
   DailyTrendItem,
   LoginResponse,
   Merchant,
@@ -9,7 +11,6 @@ import type {
   PaymentMethodDistributionItem,
   Permission,
   PermissionGroup,
-  RegenerateSecretRequest,
   Role,
   StatusDistributionItem,
   Transaction,
@@ -114,9 +115,23 @@ async function rawRequest<T>(
   }
 
   if (!res.ok) {
-    const err = (json ?? {}) as { error?: unknown; message?: string };
+    const err = (json ?? {}) as {
+      error?: unknown;
+      message?: string;
+    };
+    const nestedError =
+      typeof err.error === "object" && err.error !== null
+        ? (err.error as { message?: unknown; details?: unknown })
+        : undefined;
+    const nestedMessage =
+      typeof nestedError?.message === "string" ? nestedError.message : undefined;
+    const nestedDetails =
+      typeof nestedError?.details === "string" ? nestedError.details : undefined;
     const message =
       (typeof err.error === "string" ? err.error : undefined) ??
+      (nestedMessage && nestedMessage !== "Bad Request"
+        ? nestedMessage
+        : nestedDetails ?? nestedMessage) ??
       err.message ??
       `Request failed with status ${res.status}`;
     throw new ApiError(message, res.status, json);
@@ -183,6 +198,29 @@ export const api = {
     },
   },
 
+  users: {
+    async listAdmins(params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+    }): Promise<PagedResponse<User>> {
+      return request<PagedResponse<User>>("/users", { query: params });
+    },
+    async getAdmin(id: string): Promise<User> {
+      return request<User>(`/users/${id}`);
+    },
+    async createAdmin(body: CreateAdminRequest): Promise<User> {
+      return request<User>("/users", { method: "POST", body });
+    },
+    async updateAdmin(id: string, body: UpdateAdminRequest): Promise<User> {
+      return request<User>(`/users/${id}`, { method: "PUT", body });
+    },
+    async deactivateAdmin(id: string): Promise<User> {
+      return request<User>(`/users/${id}`, { method: "DELETE" });
+    },
+  },
+
   merchants: {
     async options(): Promise<{ id: string; name: string }[]> {
       return request<{ id: string; name: string }[]>("/merchants/options");
@@ -206,17 +244,14 @@ export const api = {
     async update(id: string, body: UpdateMerchantRequest): Promise<Merchant> {
       return request<Merchant>(`/merchants/${id}`, { method: "PUT", body });
     },
+    async rotateKey(id: string): Promise<Merchant> {
+      return request<Merchant>(`/merchants/${id}/rotate-key`, { method: "POST" });
+    },
+    async rotateWebhookSecret(id: string): Promise<Merchant> {
+      return request<Merchant>(`/merchants/${id}/rotate-webhook-secret`, { method: "POST" });
+    },
     async remove(id: string): Promise<unknown> {
       return request(`/merchants/${id}`, { method: "DELETE" });
-    },
-    async regenerateSecret(
-      id: string,
-      body: RegenerateSecretRequest,
-    ): Promise<Merchant> {
-      return request<Merchant>(`/merchants/${id}/regenerate-secret`, {
-        method: "PATCH",
-        body,
-      });
     },
   },
 

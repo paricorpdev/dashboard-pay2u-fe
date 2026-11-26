@@ -10,6 +10,7 @@ import {
   Receipt,
   ShieldCheck,
   Store,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -26,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/transactions", label: "Transaksi", icon: Receipt },
   { href: "/merchants", label: "Merchants", icon: Store },
-  { href: "/access", label: "Roles & Akses", icon: ShieldCheck },
+  { href: "/admins", label: "Manajemen Admin", icon: Users },
 ];
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {

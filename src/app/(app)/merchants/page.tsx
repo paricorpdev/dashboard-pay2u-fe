@@ -7,9 +7,7 @@ import {
   KeyRound,
   Pencil,
   Plus,
-  RefreshCw,
   Store,
-  Trash2,
 } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import type { Merchant, PagedResponse } from "@/lib/types";
@@ -26,8 +24,14 @@ import {
 import { MerchantDialog } from "@/components/merchant-dialog";
 import { SecretDialog } from "@/components/secret-dialog";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 export default function MerchantsPage() {
+  const { user } = useAuth();
+  const canManageMerchants = Boolean(
+    user?.roles.some((role) => role.code === "ROLE_ADMIN") &&
+      !user.roles.some((role) => role.code === "ROLE_SUPER_ADMIN"),
+  );
   const [rows, setRows] = useState<Merchant[]>([]);
   const [paging, setPaging] = useState({ page: 1, totalPage: 1, totalData: 0 });
   const [loading, setLoading] = useState(true);
@@ -74,18 +78,6 @@ export default function MerchantsPage() {
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter]);
-
-  async function handleDelete(m: Merchant) {
-    if (!confirm(`Hapus merchant "${m.name}"? Tindakan ini tidak dapat dibatalkan.`)) {
-      return;
-    }
-    try {
-      await api.merchants.remove(m.id);
-      await load();
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : "Gagal menghapus merchant.");
-    }
-  }
 
   function openCreate() {
     setEditing(null);
@@ -134,9 +126,11 @@ export default function MerchantsPage() {
               </Select>
             </div>
           </div>
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Tambah Merchant
-          </Button>
+          {canManageMerchants ? (
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4" /> Tambah Merchant
+            </Button>
+          ) : null}
         </div>
       </Card>
 
@@ -154,11 +148,11 @@ export default function MerchantsPage() {
             icon={<Store className="h-6 w-6" />}
             title="Belum ada merchant"
             description="Tambahkan merchant pertama untuk mulai memantau transaksinya."
-            action={
+            action={canManageMerchants ? (
               <Button onClick={openCreate}>
                 <Plus className="h-4 w-4" /> Tambah Merchant
               </Button>
-            }
+            ) : undefined}
           />
         ) : (
           <>
@@ -199,32 +193,20 @@ export default function MerchantsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
-                            title="Regenerate Secret"
-                            onClick={() => openSecret(m)}
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
                             title="Lihat Kredensial"
                             onClick={() => openSecret(m)}
                           >
                             <KeyRound className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            title="Edit"
-                            onClick={() => openEdit(m)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            title="Hapus"
-                            onClick={() => void handleDelete(m)}
-                          >
-                            <Trash2 className="h-4 w-4 text-danger" />
-                          </Button>
+                          {canManageMerchants ? (
+                            <Button
+                              variant="ghost"
+                              title="Edit"
+                              onClick={() => openEdit(m)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          ) : null}
                         </div>
                       </td>
                     </tr>
@@ -268,7 +250,12 @@ export default function MerchantsPage() {
       <SecretDialog
         open={secretOpen}
         merchant={secretMerchant}
+        canManage={canManageMerchants}
         onClose={() => setSecretOpen(false)}
+        onUpdated={(merchant) => {
+          setSecretMerchant(merchant);
+          void load();
+        }}
       />
     </div>
   );
