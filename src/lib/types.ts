@@ -146,6 +146,39 @@ export interface StatusDistributionItem {
   percentage: number;
 }
 
+export interface DisbursementSummary {
+  month: number;
+  year: number;
+  total_volume_amount: number;
+  total_disbursement_count: number;
+  success_count: number;
+  waiting_settlement_count: number;
+  processing_count: number;
+  failed_count: number;
+  cancelled_count: number;
+  success_rate: number;
+  total_admin_fee: number;
+}
+
+export interface DisbursementDailyTrendItem {
+  date: string;
+  day: number;
+  total_amount: number;
+  total_count: number;
+  success_count: number;
+  waiting_settlement_count: number;
+  processing_count: number;
+  failed_count: number;
+  cancelled_count: number;
+}
+
+export interface DisbursementBankDistributionItem {
+  bank_name: string;
+  count: number;
+  amount: number;
+  percentage: number;
+}
+
 // ── Transactions ──────────────────────────────────────────────────────────
 export interface MerchantSummary {
   id: string;

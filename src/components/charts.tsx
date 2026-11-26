@@ -16,7 +16,8 @@ import {
   YAxis,
 } from "recharts";
 import { AXIS_COLOR, CATEGORY_COLOR, GRID_COLOR, SERIES_COLORS } from "@/lib/chart-colors";
-import type { CategorySlice, VendorSlice } from "@/lib/analytics";
+import type { CategorySlice } from "@/lib/analytics";
+import type { DisbursementBankDistributionItem } from "@/lib/types";
 import { formatCurrency, formatCurrencyCompact, formatNumber } from "@/lib/utils";
 
 const tooltipStyle = {
@@ -89,6 +90,79 @@ export function VolumeTrendChart({
   );
 }
 
+export function FlowTrendChart({
+  data,
+  showPayment = true,
+  showDisbursement = true,
+}: {
+  data: { label: string; payment: number; disbursement: number }[];
+  showPayment?: boolean;
+  showDisbursement?: boolean;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={320}>
+      <AreaChart data={data} margin={{ top: 10, right: 8, left: 8, bottom: 0 }}>
+        <defs>
+          <linearGradient id="paymentFlowFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.34} />
+            <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.02} />
+          </linearGradient>
+          <linearGradient id="disbursementFlowFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.3} />
+            <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid stroke={GRID_COLOR} strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="label"
+          tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+          tickLine={false}
+          axisLine={{ stroke: GRID_COLOR }}
+        />
+        <YAxis
+          tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => formatCurrencyCompact(Number(value))}
+          width={70}
+        />
+        <Tooltip
+          {...tooltipStyle}
+          formatter={(value: FormatterValue, name) => [
+            formatCurrency(Number(value)),
+            String(name),
+          ]}
+        />
+        <Legend
+          wrapperStyle={{ fontSize: 12, color: AXIS_COLOR }}
+          iconType="circle"
+          iconSize={8}
+        />
+        {showPayment ? (
+          <Area
+            type="monotone"
+            dataKey="payment"
+            name="Payment masuk"
+            stroke="#4f46e5"
+            strokeWidth={2.5}
+            fill="url(#paymentFlowFill)"
+          />
+        ) : null}
+        {showDisbursement ? (
+          <Area
+            type="monotone"
+            dataKey="disbursement"
+            name="Disbursement keluar"
+            stroke="#0ea5e9"
+            strokeWidth={2.5}
+            fill="url(#disbursementFlowFill)"
+          />
+        ) : null}
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
 interface CountTrendPoint {
   label: string;
   count: number;
@@ -128,6 +202,56 @@ export function StatusTrendChart({ data }: { data: CountTrendPoint[] }) {
         <Bar dataKey="success" name="Sukses" stackId="s" fill="#34d399" />
         <Bar dataKey="pending" name="Pending" stackId="s" fill="#fbbf24" />
         <Bar dataKey="expired" name="Expired" stackId="s" fill="#f87171" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+interface DisbursementStatusTrendPoint {
+  label: string;
+  success: number;
+  waiting: number;
+  processing: number;
+  failed: number;
+  cancelled: number;
+}
+
+export function DisbursementStatusTrendChart({
+  data,
+}: {
+  data: DisbursementStatusTrendPoint[];
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={data} margin={{ top: 10, right: 8, left: 8, bottom: 0 }}>
+        <CartesianGrid stroke={GRID_COLOR} strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="label"
+          tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+          tickLine={false}
+          axisLine={{ stroke: GRID_COLOR }}
+        />
+        <YAxis
+          tick={{ fill: AXIS_COLOR, fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => formatNumber(Number(value))}
+          width={42}
+        />
+        <Tooltip
+          {...tooltipStyle}
+          formatter={(value: FormatterValue) => formatNumber(Number(value))}
+        />
+        <Legend
+          wrapperStyle={{ fontSize: 11, color: AXIS_COLOR }}
+          iconType="circle"
+          iconSize={7}
+        />
+        <Bar dataKey="success" name="Sukses" stackId="disb" fill="#10b981" />
+        <Bar dataKey="waiting" name="Menunggu settlement" stackId="disb" fill="#f59e0b" />
+        <Bar dataKey="processing" name="Diproses" stackId="disb" fill="#0ea5e9" />
+        <Bar dataKey="failed" name="Gagal" stackId="disb" fill="#ef4444" />
+        <Bar dataKey="cancelled" name="Dibatalkan" stackId="disb" fill="#94a3b8" />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -187,9 +311,16 @@ export function VaQrisDonut({ data }: { data: CategorySlice[] }) {
   );
 }
 
-/** Donut chart of transaction volume per vendor/bank. */
-export function VendorDonut({ data }: { data: VendorSlice[] }) {
-  const chartData = data.map((d) => ({ name: d.name, value: d.value }));
+export function DisbursementBankDonut({
+  data,
+}: {
+  data: DisbursementBankDistributionItem[];
+}) {
+  const chartData = data.map((item) => ({
+    name: item.bank_name,
+    value: item.count,
+    percentage: item.percentage,
+  }));
   return (
     <ResponsiveContainer width="100%" height={280}>
       <PieChart>
@@ -205,20 +336,16 @@ export function VendorDonut({ data }: { data: VendorSlice[] }) {
           stroke="#ffffff"
           strokeWidth={2}
         >
-          {chartData.map((entry, idx) => (
-            <Cell key={entry.name} fill={SERIES_COLORS[idx % SERIES_COLORS.length]} />
+          {chartData.map((entry, index) => (
+            <Cell key={entry.name} fill={SERIES_COLORS[index % SERIES_COLORS.length]} />
           ))}
         </Pie>
         <Tooltip
           {...tooltipStyle}
-          formatter={(value: FormatterValue, _n, payload) => {
-            const total = chartData.reduce((a, b) => a + b.value, 0);
-            const num = Number(value);
-            const pct = total > 0 ? ((num / total) * 100).toFixed(1) : "0";
-            return [
-              `${formatNumber(num)} trx (${pct}%)`,
-              (payload as { name?: string })?.name ?? "",
-            ];
+          formatter={(value: FormatterValue, _name, payload) => {
+            const count = Number(value);
+            const percentage = (payload as { payload?: { percentage?: number } })?.payload?.percentage ?? 0;
+            return [`${formatNumber(count)} transfer (${percentage.toFixed(1)}%)`, "Jumlah"];
           }}
         />
         <Legend
@@ -240,9 +367,25 @@ interface StatusSlice {
 const STATUS_COLOR: Record<string, string> = {
   SUCCESS: "#34d399",
   PAID: "#34d399",
+  WAITING_SETTLEMENT: "#f59e0b",
+  PROCESSING: "#0ea5e9",
   PENDING: "#fbbf24",
   EXPIRED: "#f87171",
   FAILED: "#f87171",
+  CANCELLED: "#94a3b8",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  SUCCESS: "Sukses",
+  PAID: "Dibayar",
+  WAITING_SETTLEMENT: "Menunggu settlement",
+  PROCESSING: "Diproses",
+  PENDING: "Pending",
+  EXPIRED: "Kedaluwarsa",
+  FAILED: "Gagal",
+  CANCELLED: "Dibatalkan",
+  REFUND: "Refund",
+  PROCESS: "Diproses",
 };
 
 /** Horizontal bar chart of status distribution. */
@@ -269,9 +412,11 @@ export function StatusBar({ data }: { data: StatusSlice[] }) {
           tickLine={false}
           axisLine={false}
           width={80}
+          tickFormatter={(value) => STATUS_LABEL[String(value).toUpperCase()] ?? value}
         />
         <Tooltip
           {...tooltipStyle}
+          labelFormatter={(value) => STATUS_LABEL[String(value).toUpperCase()] ?? String(value)}
           formatter={(value: FormatterValue) => formatNumber(Number(value))}
         />
         <Bar dataKey="count" name="Jumlah" radius={[0, 6, 6, 0]}>

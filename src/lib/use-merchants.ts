@@ -36,6 +36,12 @@ export function useMerchants() {
 
 /** Available year options for the period filter (current year back 5 years). */
 export function useYearOptions(): number[] {
-  const current = new Date().getFullYear();
-  return Array.from({ length: 6 }, (_, i) => current - i);
+  const [years, setYears] = useState<number[]>([]);
+
+  useEffect(() => {
+    const current = new Date().getFullYear();
+    setYears(Array.from({ length: 6 }, (_, i) => current - i));
+  }, []);
+
+  return years;
 }

@@ -3,69 +3,59 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   ArrowUpRight,
-  BadgePercent,
-  Coins,
-  CreditCard,
-  Hash,
-  PieChart as PieIcon,
-  Receipt,
-  TrendingUp,
+  BanknoteArrowDown,
+  ChartNoAxesCombined,
+  CircleDollarSign,
+  Percent,
+  ReceiptText,
 } from "lucide-react";
-import { fetchAnalytics, type AnalyticsBundle } from "@/lib/analytics";
+import { fetchAnalytics, disbursementStatusRows, type AnalyticsBundle } from "@/lib/analytics";
 import { useMerchants, useYearOptions } from "@/lib/use-merchants";
 import { PeriodFilter, type PeriodValue } from "@/components/period-filter";
+import { OperationScopeFilter, type OperationScope } from "@/components/operation-scope-filter";
 import { StatCard } from "@/components/stat-card";
 import {
+  DisbursementBankDonut,
+  FlowTrendChart,
   StatusBar,
   VaQrisDonut,
-  VendorDonut,
-  VolumeTrendChart,
 } from "@/components/charts";
 import { Badge, Card, CardHeader, EmptyState, LoadingBlock } from "@/components/ui";
 import { ApiError } from "@/lib/api";
-import {
-  MONTH_NAMES,
-  formatCurrency,
-  formatNumber,
-  formatPaymentMethod,
-} from "@/lib/utils";
+import { MONTH_NAMES, formatCurrency, formatNumber } from "@/lib/utils";
 
 function defaultPeriod(): PeriodValue {
-  const now = new Date();
   return {
     mode: "monthly",
-    month: now.getMonth() + 1,
-    year: now.getFullYear(),
+    month: 1,
+    year: 2000,
     merchantId: "",
   };
 }
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<PeriodValue>(defaultPeriod);
+  const [periodReady, setPeriodReady] = useState(false);
+  const [scope, setScope] = useState<OperationScope>("all");
   const { merchants, loading: loadingMerchants } = useMerchants();
   const years = useYearOptions();
-
   const [bundle, setBundle] = useState<AnalyticsBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (p: PeriodValue) => {
+  const load = useCallback(async (value: PeriodValue) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchAnalytics({
-        mode: p.mode,
-        month: p.month,
-        year: p.year,
-        merchantId: p.merchantId || undefined,
-      });
-      setBundle(data);
+      setBundle(await fetchAnalytics({
+        mode: value.mode,
+        month: value.month,
+        year: value.year,
+        merchantId: value.merchantId || undefined,
+      }));
     } catch (err) {
-      const message =
-        err instanceof ApiError ? err.message : "Gagal memuat data analytics.";
-      setError(message);
+      setError(err instanceof ApiError ? err.message : "Gagal memuat ringkasan operasional.");
       setBundle(null);
     } finally {
       setLoading(false);
@@ -73,45 +63,76 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    const now = new Date();
+    setPeriod((current) => ({
+      ...current,
+      month: now.getMonth() + 1,
+      year: now.getFullYear(),
+    }));
+    setPeriodReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!periodReady) return;
     void load(period);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period.mode, period.month, period.year, period.merchantId]);
+  }, [periodReady, period.mode, period.month, period.year, period.merchantId]);
 
-  const periodLabel = useMemo(() => {
-    if (period.mode === "monthly") {
-      return `${MONTH_NAMES[period.month - 1]} ${period.year}`;
-    }
-    return `Tahun ${period.year}`;
-  }, [period]);
+  const periodLabel = useMemo(() => period.mode === "monthly"
+    ? `${MONTH_NAMES[period.month - 1]} ${period.year}`
+    : `Tahun ${period.year}`, [period]);
+  const showPayment = scope !== "disbursement";
+  const showDisbursement = scope !== "payment";
 
-  const summary = bundle?.summary;
-
-  // Trend series differs by mode: monthly -> daily, yearly -> per-month.
-  const volumeTrend = useMemo(() => {
+  const flowTrend = useMemo(() => {
     if (!bundle) return [];
     if (period.mode === "yearly") {
-      return bundle.yearSeries.map((y) => ({
-        label: y.label,
-        volume: y.volume,
-        count: y.count,
+      return bundle.yearSeries.map((payment, index) => ({
+        label: payment.label,
+        payment: payment.volume,
+        disbursement: bundle.disbursementYearSeries[index]?.volume ?? 0,
       }));
     }
-    return bundle.dailyTrend.map((d) => ({
-      label: `${d.day}`,
-      volume: d.total_amount,
-      count: d.total_count,
+    return bundle.dailyTrend.map((payment, index) => ({
+      label: String(payment.day),
+      payment: payment.total_amount,
+      disbursement: bundle.disbursementDailyTrend[index]?.total_amount ?? 0,
     }));
   }, [bundle, period.mode]);
 
+  const disbursement = bundle?.disbursementSummary;
+  const pendingDisbursements = disbursement
+    ? disbursement.waiting_settlement_count + disbursement.processing_count
+    : 0;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold text-foreground">Ringkasan Pembayaran</h2>
-        <p className="text-sm text-muted-foreground">
-          Pantau volume, metode pembayaran, dan status transaksi untuk periode{" "}
-          <span className="font-medium text-foreground">{periodLabel}</span>.
-        </p>
-      </div>
+      <section className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-sky-500/10 p-6 shadow-sm sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <ChartNoAxesCombined className="h-4 w-4" />
+              </span>
+              <Badge tone="info">PAYGATE · OPERATIONS</Badge>
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Ringkasan operasional
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Pantau dana payment yang masuk dan disbursement yang dikirim dalam satu tampilan.
+              Periode aktif: <span className="font-semibold text-foreground">{periodLabel}</span>.
+            </p>
+          </div>
+          <Link
+            href="/analytics"
+            className="inline-flex w-fit items-center gap-2 rounded-xl border border-border bg-background/70 px-4 py-2.5 text-sm font-medium text-foreground transition hover:border-primary/40 hover:text-primary"
+          >
+            Buka analitik <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
 
       <PeriodFilter
         value={period}
@@ -120,189 +141,174 @@ export default function DashboardPage() {
         years={years}
         loadingMerchants={loadingMerchants}
       />
+      <OperationScopeFilter value={scope} onChange={setScope} />
 
       {error ? (
         <Card className="border-danger/30 bg-danger/5">
-          <div className="flex items-center gap-3 text-danger">
-            <AlertTriangle className="h-5 w-5" />
-            <div>
-              <p className="text-sm font-medium">Gagal memuat data</p>
-              <p className="text-xs text-muted-foreground">{error}</p>
-            </div>
+          <div className="text-sm text-danger">
+            <p className="font-semibold">Data belum dapat dimuat</p>
+            <p className="mt-1 text-xs text-muted-foreground">{error}</p>
           </div>
         </Card>
       ) : null}
 
-      {loading && !bundle ? <LoadingBlock label="Memuat analytics…" /> : null}
+      {loading && !bundle ? <LoadingBlock label="Memuat ringkasan operasional…" /> : null}
 
-      {summary ? (
+      {bundle ? (
         <div className="animate-fade-up space-y-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              label="Total Volume"
-              value={formatCurrency(summary.total_volume_amount)}
-              hint={periodLabel}
-              icon={Coins}
-              tone="primary"
-            />
-            <StatCard
-              label="Total Transaksi"
-              value={formatNumber(summary.total_transaction_count)}
-              hint={`${formatNumber(summary.success_count)} sukses`}
-              icon={Receipt}
-              tone="accent"
-            />
-            <StatCard
-              label="Success Rate"
-              value={`${summary.success_rate.toFixed(1)}%`}
-              hint={`${formatNumber(summary.pending_count)} pending · ${formatNumber(summary.expired_count)} expired`}
-              icon={TrendingUp}
-              tone="success"
-            />
-            <StatCard
-              label="Total Admin Fee"
-              value={formatCurrency(summary.total_admin_fee)}
-              hint="Akumulasi biaya admin"
-              icon={BadgePercent}
-              tone="warning"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <Card className="xl:col-span-2">
-              <CardHeader
-                title={
-                  period.mode === "yearly"
-                    ? "Tren Volume per Bulan"
-                    : "Tren Volume Harian"
-                }
-                subtitle={
-                  period.mode === "yearly"
-                    ? `Akumulasi 12 bulan di tahun ${period.year}`
-                    : `Volume transaksi per tanggal di ${periodLabel}`
-                }
-                icon={<TrendingUp className="h-4 w-4" />}
-              />
-              <div className="mt-4">
-                {volumeTrend.length > 0 ? (
-                  <VolumeTrendChart data={volumeTrend} />
-                ) : (
-                  <EmptyState title="Belum ada data tren" />
-                )}
+          {showPayment ? (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <CircleDollarSign className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Payment masuk</h3>
+                <span className="text-xs text-muted-foreground">Transaksi sukses pada periode terpilih</span>
               </div>
-            </Card>
-
-            <Card>
-              <CardHeader
-                title="Status Transaksi"
-                subtitle="Komposisi status"
-                icon={<Hash className="h-4 w-4" />}
-              />
-              <div className="mt-4">
-                {bundle.statusDistribution.length > 0 ? (
-                  <StatusBar data={bundle.statusDistribution} />
-                ) : (
-                  <EmptyState title="Belum ada data status" />
-                )}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <StatCard
+                  label="Volume sukses"
+                  value={formatCurrency(bundle.summary.total_volume_amount)}
+                  hint="Nilai payment berhasil"
+                  icon={CircleDollarSign}
+                  tone="primary"
+                />
+                <StatCard
+                  label="Jumlah transaksi"
+                  value={formatNumber(bundle.summary.total_transaction_count)}
+                  hint={`${formatNumber(bundle.summary.success_count)} sukses`}
+                  icon={ReceiptText}
+                  tone="accent"
+                />
+                <StatCard
+                  label="Success rate"
+                  value={`${bundle.summary.success_rate.toFixed(1)}%`}
+                  hint={`${formatNumber(bundle.summary.pending_count)} pending · ${formatNumber(bundle.summary.expired_count)} expired`}
+                  icon={Percent}
+                  tone="success"
+                />
               </div>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <Card highlight>
-              <CardHeader
-                title="Virtual Account vs QRIS"
-                subtitle="Proporsi metode pembayaran"
-                icon={<CreditCard className="h-4 w-4" />}
-              />
-              <div className="mt-4">
-                {bundle.vaQrisSplit.length > 0 ? (
-                  <VaQrisDonut data={bundle.vaQrisSplit} />
-                ) : (
-                  <EmptyState title="Belum ada data metode pembayaran" />
-                )}
-              </div>
-            </Card>
-
-            <Card highlight>
-              <CardHeader
-                title="Berdasarkan Vendor / Bank"
-                subtitle="Distribusi per penyedia"
-                icon={<PieIcon className="h-4 w-4" />}
-                action={
-                  <Link
-                    href="/analytics"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                  >
-                    Detail <ArrowUpRight className="h-3 w-3" />
-                  </Link>
-                }
-              />
-              <div className="mt-4">
-                {bundle.vendorSplit.length > 0 ? (
-                  <VendorDonut data={bundle.vendorSplit} />
-                ) : (
-                  <EmptyState title="Belum ada data vendor" />
-                )}
-              </div>
-            </Card>
-          </div>
-
-          {bundle.paymentMethods.length > 0 ? (
-            <Card>
-              <CardHeader
-                title="Rincian Metode Pembayaran"
-                subtitle="Jumlah transaksi & nilai per metode"
-                icon={<CreditCard className="h-4 w-4" />}
-              />
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                      <th className="pb-2 pr-4 font-medium">Metode</th>
-                      <th className="pb-2 pr-4 text-right font-medium">Trx</th>
-                      <th className="pb-2 pr-4 text-right font-medium">Nilai</th>
-                      <th className="pb-2 text-right font-medium">Porsi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bundle.paymentMethods.map((m) => (
-                      <tr
-                        key={m.payment_method}
-                        className="border-b border-border/50 last:border-0"
-                      >
-                        <td className="py-2.5 pr-4">
-                          <Badge tone="info">
-                            {formatPaymentMethod(m.payment_method)}
-                          </Badge>
-                        </td>
-                        <td className="py-2.5 pr-4 text-right tabular-nums text-foreground">
-                          {formatNumber(m.count)}
-                        </td>
-                        <td className="py-2.5 pr-4 text-right tabular-nums text-foreground">
-                          {formatCurrency(m.amount)}
-                        </td>
-                        <td className="py-2.5 text-right tabular-nums text-muted-foreground">
-                          {m.percentage.toFixed(1)}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
+            </section>
           ) : null}
-        </div>
-      ) : null}
 
-      {!loading && !error && bundle && summary?.total_transaction_count === 0 ? (
-        <Card>
-          <EmptyState
-            icon={<PieIcon className="h-6 w-6" />}
-            title="Belum ada transaksi pada periode ini"
-            description="Coba ubah filter bulan/tahun atau pilih merchant lain untuk melihat data."
-          />
-        </Card>
+          {showDisbursement ? (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <BanknoteArrowDown className="h-4 w-4 text-sky-600" />
+                <h3 className="text-sm font-semibold text-foreground">Disbursement keluar</h3>
+                <span className="text-xs text-muted-foreground">Nilai dana yang berhasil dikirim</span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <StatCard
+                  label="Dana terkirim sukses"
+                  value={formatCurrency(disbursement!.total_volume_amount)}
+                  hint="Nilai transfer berhasil"
+                  icon={BanknoteArrowDown}
+                  tone="accent"
+                />
+                <StatCard
+                  label="Jumlah transfer"
+                  value={formatNumber(disbursement!.total_disbursement_count)}
+                  hint={`${formatNumber(disbursement!.success_count)} sukses`}
+                  icon={ReceiptText}
+                  tone="primary"
+                />
+                <StatCard
+                  label="Success rate"
+                  value={`${disbursement!.success_rate.toFixed(1)}%`}
+                  hint={`${formatNumber(pendingDisbursements)} menunggu / diproses`}
+                  icon={Percent}
+                  tone="success"
+                />
+              </div>
+            </section>
+          ) : null}
+
+          <Card>
+              <CardHeader
+                title="Arus dana"
+                subtitle={period.mode === "yearly"
+                  ? `Nilai transaksi sukses per bulan selama ${period.year}`
+                  : `Nilai transaksi sukses per hari pada ${periodLabel}`}
+                icon={<ChartNoAxesCombined className="h-4 w-4" />}
+              />
+              <div className="mt-4">
+                <FlowTrendChart data={flowTrend} showPayment={showPayment} showDisbursement={showDisbursement} />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Payment menunjukkan dana masuk; disbursement menunjukkan nilai transfer keluar. Nilainya dipisah, tidak dijumlahkan sebagai saldo.
+              </p>
+          </Card>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {showPayment ? (
+              <Card>
+                <CardHeader title="Status payment" subtitle="Jumlah transaksi menurut status" icon={<CircleDollarSign className="h-4 w-4" />} />
+                {bundle.statusDistribution.length > 0
+                  ? <StatusBar data={bundle.statusDistribution} />
+                  : <EmptyState title="Belum ada data status payment" />}
+              </Card>
+            ) : null}
+
+            {showDisbursement ? (
+              <Card>
+                <CardHeader
+                  title="Status disbursement"
+                  subtitle="Jumlah berdasarkan status transfer"
+                  icon={<BanknoteArrowDown className="h-4 w-4" />}
+                />
+                <div className="mt-3">
+                  {disbursementStatusRows(disbursement!).length > 0 ? (
+                    <StatusBar data={disbursementStatusRows(disbursement!)} />
+                  ) : (
+                    <EmptyState title="Belum ada data disbursement" />
+                  )}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-xl bg-muted/50 p-3">
+                    <p className="text-muted-foreground">Admin fee sukses</p>
+                    <p className="mt-1 font-semibold text-foreground">{formatCurrency(disbursement!.total_admin_fee)}</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/50 p-3">
+                    <p className="text-muted-foreground">Gagal / dibatalkan</p>
+                    <p className="mt-1 font-semibold text-foreground">
+                      {formatNumber(disbursement!.failed_count + disbursement!.cancelled_count)}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ) : null}
+            {showPayment ? (
+              <Card>
+                <CardHeader title="Metode payment" subtitle="Distribusi transaksi masuk" icon={<CircleDollarSign className="h-4 w-4" />} />
+                {bundle.vaQrisSplit.length > 0 ? (
+                  <div className="mt-2"><VaQrisDonut data={bundle.vaQrisSplit} /></div>
+                ) : <EmptyState title="Belum ada data metode payment" />}
+              </Card>
+            ) : null}
+            {showDisbursement ? (
+              <Card>
+                <CardHeader
+                  title="Bank tujuan disbursement"
+                  subtitle="Distribusi transfer berdasarkan nama bank beneficiary"
+                  icon={<BanknoteArrowDown className="h-4 w-4" />}
+                  action={<Link href="/analytics" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">Rincian <ArrowUpRight className="h-3 w-3" /></Link>}
+                />
+                {bundle.disbursementBanks.length > 0 ? (
+                  <>
+                    <div className="mt-2"><DisbursementBankDonut data={bundle.disbursementBanks} /></div>
+                    <div className="space-y-2 border-t border-border pt-3">
+                      {bundle.disbursementBanks.map((bank) => (
+                        <div key={bank.bank_name} className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                          <span className="font-medium text-foreground">{bank.bank_name}</span>
+                          <span className="text-right tabular-nums text-muted-foreground">{formatNumber(bank.count)} transfer · {formatCurrency(bank.amount)} sukses</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : <EmptyState title="Belum ada data bank tujuan" />}
+              </Card>
+            ) : null}
+          </div>
+        </div>
       ) : null}
     </div>
   );

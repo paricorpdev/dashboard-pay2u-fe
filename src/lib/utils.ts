@@ -67,18 +67,6 @@ export function paymentMethodCategory(method: string): "VA" | "QRIS" | "Other" {
   return "Other";
 }
 
-/** Extract a readable vendor/bank name from a payment method string. */
-export function paymentMethodVendor(method: string): string {
-  const cleaned = (method ?? "").replace(/_/g, " ").trim();
-  const upper = cleaned.toUpperCase();
-  if (upper === "QRIS") return "QRIS";
-  if (upper.startsWith("VA")) {
-    const bank = cleaned.slice(2).trim();
-    return bank || "Virtual Account";
-  }
-  return cleaned || "Unknown";
-}
-
 export const MONTH_NAMES = [
   "Januari",
   "Februari",

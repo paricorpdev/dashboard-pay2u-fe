@@ -5,6 +5,9 @@ import type {
   CreateAdminRequest,
   UpdateAdminRequest,
   DailyTrendItem,
+  DisbursementBankDistributionItem,
+  DisbursementDailyTrendItem,
+  DisbursementSummary,
   LoginResponse,
   Merchant,
   PagedResponse,
@@ -322,6 +325,51 @@ export const api = {
       signal?: AbortSignal;
     }): Promise<StatusDistributionItem[]> {
       return request<StatusDistributionItem[]>("/analytics/status-distribution", {
+        query: {
+          month: params.month,
+          year: params.year,
+          merchant_id: params.merchant_id,
+        },
+        signal: params.signal,
+      });
+    },
+    async disbursementSummary(params: {
+      month: number;
+      year: number;
+      merchant_id?: string;
+      signal?: AbortSignal;
+    }): Promise<DisbursementSummary> {
+      return request<DisbursementSummary>("/analytics/disbursement-summary", {
+        query: {
+          month: params.month,
+          year: params.year,
+          merchant_id: params.merchant_id,
+        },
+        signal: params.signal,
+      });
+    },
+    async disbursementTrend(params: {
+      month: number;
+      year: number;
+      merchant_id?: string;
+      signal?: AbortSignal;
+    }): Promise<DisbursementDailyTrendItem[]> {
+      return request<DisbursementDailyTrendItem[]>("/analytics/disbursement-trend", {
+        query: {
+          month: params.month,
+          year: params.year,
+          merchant_id: params.merchant_id,
+        },
+        signal: params.signal,
+      });
+    },
+    async disbursementBanks(params: {
+      month: number;
+      year: number;
+      merchant_id?: string;
+      signal?: AbortSignal;
+    }): Promise<DisbursementBankDistributionItem[]> {
+      return request<DisbursementBankDistributionItem[]>("/analytics/disbursement-banks", {
         query: {
           month: params.month,
           year: params.year,

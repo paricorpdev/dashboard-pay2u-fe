@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays, Filter, Store } from "lucide-react";
+import type { ReactNode } from "react";
 import { MONTH_NAMES } from "@/lib/utils";
 import type { MerchantOption } from "@/lib/use-merchants";
 import type { PeriodMode } from "@/lib/types";
@@ -19,19 +20,21 @@ export function PeriodFilter({
   merchants,
   years,
   loadingMerchants,
+  action,
 }: {
   value: PeriodValue;
   onChange: (next: PeriodValue) => void;
   merchants: MerchantOption[];
   years: number[];
   loadingMerchants?: boolean;
+  action?: ReactNode;
 }) {
   const set = (patch: Partial<PeriodValue>) => onChange({ ...value, ...patch });
 
   const yearOptions =
     years.length > 0
       ? years
-      : Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
+      : [value.year];
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl glass p-4 lg:flex-row lg:items-end lg:justify-between">
@@ -118,6 +121,8 @@ export function PeriodFilter({
             ))}
           </Select>
         </div>
+
+        {action}
       </div>
     </div>
   );
