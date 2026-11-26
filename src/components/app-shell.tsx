@@ -9,7 +9,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui";
 
 const TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard Overview",
+  "/dashboard": "Dashboard",
   "/analytics": "Analytics & Grafik",
   "/transactions": "Daftar Transaksi",
   "/merchants": "Manajemen Merchant",

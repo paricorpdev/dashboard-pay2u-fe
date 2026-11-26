@@ -28,6 +28,7 @@ const BASE = "/api/v1";
 // ── Token storage (client-side only) ─────────────────────────────────────────
 const ACCESS_KEY = "pay2u_access_token";
 const REFRESH_KEY = "pay2u_refresh_token";
+const AUTH_NOTICE_KEY = "pay2u_auth_notice";
 
 export const tokenStore = {
   get access(): string | null {
@@ -132,12 +133,21 @@ async function rawRequest<T>(
       typeof nestedError?.details === "string" ? nestedError.details : undefined;
     const message =
       (typeof err.error === "string" ? err.error : undefined) ??
-      (nestedMessage && nestedMessage !== "Bad Request"
-        ? nestedMessage
-        : nestedDetails ?? nestedMessage) ??
+      nestedDetails ??
+      (nestedMessage && nestedMessage !== "Bad Request" ? nestedMessage : undefined) ??
       err.message ??
       `Request failed with status ${res.status}`;
-    throw new ApiError(message, res.status, json);
+    const apiError = new ApiError(message, res.status, json);
+    if (res.status === 423 && path !== "/auth/login" && typeof window !== "undefined") {
+      tokenStore.clear();
+      try {
+        window.sessionStorage.setItem(AUTH_NOTICE_KEY, message);
+      } catch {
+        // The response still carries the suspension reason if storage is unavailable.
+      }
+      window.dispatchEvent(new CustomEvent("pay2u:unauthorized"));
+    }
+    throw apiError;
   }
 
   if (json === null) {

@@ -22,6 +22,17 @@ export default function LoginPage() {
     if (!loading && user) router.replace(getDefaultRoute());
   }, [loading, user, router, getDefaultRoute]);
 
+  useEffect(() => {
+    try {
+      const notice = window.sessionStorage.getItem("pay2u_auth_notice");
+      if (!notice) return;
+      setError(notice);
+      window.sessionStorage.removeItem("pay2u_auth_notice");
+    } catch {
+      // Ignore storage restrictions; login responses still show their API message.
+    }
+  }, []);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);

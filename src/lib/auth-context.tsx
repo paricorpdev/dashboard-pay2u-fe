@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(me);
     } catch (err) {
       // Clear session if token is invalid or explicitly rejected (401/403)
-      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403 || err.status === 423)) {
         tokenStore.clear();
         setUser(null);
       } else if (!tokenStore.access) {
