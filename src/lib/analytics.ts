@@ -73,9 +73,13 @@ const EMPTY_DISBURSEMENT_SUMMARY: DisbursementSummary = {
   total_disbursement_count: 0,
   success_count: 0,
   waiting_settlement_count: 0,
+  waiting_settlement_amount: 0,
   processing_count: 0,
+  processing_amount: 0,
   failed_count: 0,
+  failed_amount: 0,
   cancelled_count: 0,
+  cancelled_amount: 0,
   success_rate: 0,
   total_admin_fee: 0,
 };
@@ -94,9 +98,13 @@ function sumDisbursementsInto(target: DisbursementSummary, s: DisbursementSummar
   target.total_disbursement_count += s.total_disbursement_count;
   target.success_count += s.success_count;
   target.waiting_settlement_count += s.waiting_settlement_count;
+  target.waiting_settlement_amount += s.waiting_settlement_amount;
   target.processing_count += s.processing_count;
+  target.processing_amount += s.processing_amount;
   target.failed_count += s.failed_count;
+  target.failed_amount += s.failed_amount;
   target.cancelled_count += s.cancelled_count;
+  target.cancelled_amount += s.cancelled_amount;
   target.total_admin_fee += s.total_admin_fee;
 }
 

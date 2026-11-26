@@ -153,9 +153,13 @@ export interface DisbursementSummary {
   total_disbursement_count: number;
   success_count: number;
   waiting_settlement_count: number;
+  waiting_settlement_amount: number;
   processing_count: number;
+  processing_amount: number;
   failed_count: number;
+  failed_amount: number;
   cancelled_count: number;
+  cancelled_amount: number;
   success_rate: number;
   total_admin_fee: number;
 }

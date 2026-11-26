@@ -295,7 +295,7 @@ export function VaQrisDonut({ data }: { data: CategorySlice[] }) {
             const num = Number(value);
             const pct = total > 0 ? ((num / total) * 100).toFixed(1) : "0";
             return [
-              `${formatNumber(num)} trx (${pct}%)`,
+              `${formatNumber(num)} trx sukses (${pct}%)`,
               (payload as { name?: string })?.name ?? "",
             ];
           }}
@@ -345,7 +345,7 @@ export function DisbursementBankDonut({
           formatter={(value: FormatterValue, _name, payload) => {
             const count = Number(value);
             const percentage = (payload as { payload?: { percentage?: number } })?.payload?.percentage ?? 0;
-            return [`${formatNumber(count)} transfer (${percentage.toFixed(1)}%)`, "Jumlah"];
+            return [`${formatNumber(count)} transfer sukses (${percentage.toFixed(1)}%)`, "Jumlah"];
           }}
         />
         <Legend

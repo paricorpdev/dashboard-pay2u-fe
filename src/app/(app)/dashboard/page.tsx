@@ -278,7 +278,7 @@ export default function DashboardPage() {
             ) : null}
             {showPayment ? (
               <Card>
-                <CardHeader title="Metode payment" subtitle="Distribusi transaksi masuk" icon={<CircleDollarSign className="h-4 w-4" />} />
+                <CardHeader title="Metode payment" subtitle="Distribusi transaksi payment sukses" icon={<CircleDollarSign className="h-4 w-4" />} />
                 {bundle.vaQrisSplit.length > 0 ? (
                   <div className="mt-2"><VaQrisDonut data={bundle.vaQrisSplit} /></div>
                 ) : <EmptyState title="Belum ada data metode payment" />}
@@ -288,7 +288,7 @@ export default function DashboardPage() {
               <Card>
                 <CardHeader
                   title="Bank tujuan disbursement"
-                  subtitle="Distribusi transfer berdasarkan nama bank beneficiary"
+                  subtitle="Transfer sukses berdasarkan nama bank beneficiary"
                   icon={<BanknoteArrowDown className="h-4 w-4" />}
                   action={<Link href="/analytics" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">Rincian <ArrowUpRight className="h-3 w-3" /></Link>}
                 />
@@ -299,7 +299,7 @@ export default function DashboardPage() {
                       {bundle.disbursementBanks.map((bank) => (
                         <div key={bank.bank_name} className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2 text-xs">
                           <span className="font-medium text-foreground">{bank.bank_name}</span>
-                          <span className="text-right tabular-nums text-muted-foreground">{formatNumber(bank.count)} transfer · {formatCurrency(bank.amount)} sukses</span>
+                          <span className="text-right tabular-nums text-muted-foreground">{formatNumber(bank.count)} transfer sukses · {formatCurrency(bank.amount)}</span>
                         </div>
                       ))}
                     </div>

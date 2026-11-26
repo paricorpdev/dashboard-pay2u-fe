@@ -260,14 +260,14 @@ export default function AnalyticsPage() {
             ) : null}
             {showPayment ? (
               <Card>
-                <CardHeader title="Metode pembayaran" subtitle="Komposisi Virtual Account, QRIS, dan lainnya" icon={<CircleDollarSign className="h-4 w-4" />} />
+                <CardHeader title="Metode pembayaran" subtitle="Komposisi transaksi payment sukses" icon={<CircleDollarSign className="h-4 w-4" />} />
                 {bundle.vaQrisSplit.length > 0 ? <div className="mt-2"><VaQrisDonut data={bundle.vaQrisSplit} /></div> : <EmptyState title="Belum ada data metode" />}
                 {bundle.paymentMethods.length > 0 ? (
                   <div className="space-y-2 border-t border-border pt-3">
                     {bundle.paymentMethods.map((method) => (
                       <div key={method.payment_method} className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2 text-xs">
                         <span className="font-medium text-foreground">{formatPaymentMethod(method.payment_method)}</span>
-                        <span className="text-right tabular-nums text-muted-foreground">{formatNumber(method.count)} trx · {formatCurrency(method.amount)}</span>
+                        <span className="text-right tabular-nums text-muted-foreground">{formatNumber(method.count)} trx sukses · {formatCurrency(method.amount)}</span>
                       </div>
                     ))}
                   </div>
@@ -276,7 +276,7 @@ export default function AnalyticsPage() {
             ) : null}
             {showDisbursement ? (
               <Card>
-                <CardHeader title="Bank tujuan disbursement" subtitle="Distribusi berdasarkan beneficiary_bank_name" icon={<BanknoteArrowDown className="h-4 w-4" />} />
+                <CardHeader title="Bank tujuan disbursement" subtitle="Transfer sukses berdasarkan beneficiary_bank_name" icon={<BanknoteArrowDown className="h-4 w-4" />} />
                 {bundle.disbursementBanks.length > 0 ? (
                   <div className="mt-2"><DisbursementBankDonut data={bundle.disbursementBanks} /></div>
                 ) : <EmptyState title="Belum ada data bank tujuan" />}
@@ -285,7 +285,7 @@ export default function AnalyticsPage() {
                     {bundle.disbursementBanks.map((bank) => (
                       <div key={bank.bank_name} className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2 text-xs">
                         <span className="font-medium text-foreground">{bank.bank_name}</span>
-                        <span className="text-right tabular-nums text-muted-foreground">{formatNumber(bank.count)} transfer · {formatCurrency(bank.amount)} sukses</span>
+                        <span className="text-right tabular-nums text-muted-foreground">{formatNumber(bank.count)} transfer sukses · {formatCurrency(bank.amount)}</span>
                       </div>
                     ))}
                   </div>
