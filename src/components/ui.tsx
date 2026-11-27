@@ -231,9 +231,12 @@ export function statusTone(status: string): BadgeTone {
     case "ACTIVE":
       return "success";
     case "PENDING":
+    case "WAITING_SETTLEMENT":
+    case "PROCESSING":
       return "warning";
     case "EXPIRED":
     case "FAILED":
+    case "CANCELLED":
     case "INACTIVE":
       return "danger";
     default:

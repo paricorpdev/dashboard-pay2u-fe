@@ -5,8 +5,11 @@ import type {
   CreateAdminRequest,
   UpdateAdminRequest,
   DailyTrendItem,
+  Disbursement,
   DisbursementBankDistributionItem,
+  DisbursementDetail,
   DisbursementDailyTrendItem,
+  DisbursementQuery,
   DisbursementSummary,
   LoginResponse,
   Merchant,
@@ -396,6 +399,16 @@ export const api = {
     },
     async get(id: string): Promise<TransactionDetail> {
       return request<TransactionDetail>(`/transactions/${id}`);
+    },
+  },
+
+  disbursements: {
+    async list(params: DisbursementQuery & { signal?: AbortSignal }): Promise<PagedResponse<Disbursement>> {
+      const { signal, ...query } = params;
+      return request<PagedResponse<Disbursement>>("/transactions/disbursements", { query, signal });
+    },
+    async get(id: string, signal?: AbortSignal): Promise<DisbursementDetail> {
+      return request<DisbursementDetail>(`/transactions/disbursements/${id}`, { signal });
     },
   },
 };

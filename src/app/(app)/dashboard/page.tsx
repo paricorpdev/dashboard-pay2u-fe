@@ -173,7 +173,7 @@ export default function DashboardPage() {
             icon={<ReceiptText className="h-4 w-4" />}
             action={canAccessRoute("/transactions") ? (
               <Link href="/transactions" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                Transaksi <ArrowRight className="h-3 w-3" />
+                Detail <ArrowRight className="h-3 w-3" />
               </Link>
             ) : null}
           />
@@ -205,7 +205,7 @@ export default function DashboardPage() {
             subtitle={`Ringkasan transfer keluar · ${periodLabel}`}
             icon={<BanknoteArrowDown className="h-4 w-4" />}
             action={canViewAnalytics ? (
-              <Link href="/analytics" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+              <Link href="/disbursements" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
                 Detail <ArrowRight className="h-3 w-3" />
               </Link>
             ) : null}

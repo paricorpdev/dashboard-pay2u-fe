@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import {
   BarChart3,
+  BanknoteArrowDown,
   LayoutDashboard,
   Receipt,
   ShieldCheck,
@@ -26,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/transactions", label: "Transaksi", icon: Receipt },
+  { href: "/disbursements", label: "Disbursement", icon: BanknoteArrowDown },
   { href: "/merchants", label: "Merchants", icon: Store },
   { href: "/admins", label: "Manajemen Admin", icon: Users },
 ];

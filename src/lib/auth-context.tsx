@@ -15,6 +15,7 @@ export const ROUTE_PERMISSIONS: Record<string, string | string[]> = {
   "/dashboard": "analytics.read",
   "/analytics": "analytics.read",
   "/transactions": "transactions.read",
+  "/disbursements": "transactions.read",
   "/merchants": "merchants.read",
   "/access": ["roles.read", "permissions.read"],
   "/admins": "users.read",

@@ -253,4 +253,47 @@ export interface TransactionQuery {
 }
 
 // ── Shared filter model ─────────────────────────────────────────────────────
+export interface Disbursement {
+  id: string;
+  transaction_id: string;
+  request_id: string;
+  merchant_ref: string;
+  provider: string;
+  provider_disbursement_ref: string | null;
+  channel_code: string;
+  amount: number;
+  amount_admin: number;
+  amount_discount: number;
+  amount_total: number;
+  currency: string;
+  beneficiary_name: string;
+  beneficiary_bank_code: string;
+  beneficiary_bank_name: string;
+  note: string;
+  status: string;
+  eligible_at: string | null;
+  inquiry_at: string | null;
+  transferred_at: string | null;
+  attempts: number;
+  max_attempts: number;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+  merchant: MerchantSummary | null;
+}
+
+export interface DisbursementDetail extends Disbursement {
+  beneficiary_account_number: string;
+}
+
+export interface DisbursementQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  merchant_id?: string;
+  month?: number;
+  year?: number;
+}
+
 export type PeriodMode = "monthly" | "yearly";
